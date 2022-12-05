@@ -2,8 +2,10 @@
 name = "animated-background"
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.htm
+description = "A simple animated background for your website"
+repository = "https://github.com/AtHeartEngineer/animated_background"
+license = "MIT"
+authors = ["AtHeartEngineer"]
 
 [lib]
 crate-type = ["cdylib"]
@@ -11,10 +13,12 @@ crate-type = ["cdylib"]
 [dependencies]
 js-sys = "0.3.60"
 wasm-bindgen = "0.2.83"
+console_error_panic_hook = "0.1.7"
 
 [dependencies.web-sys]
 version = "0.3.60"
 features = [
+  'console',
   'CanvasRenderingContext2d',
   'Document',
   'Element',
