@@ -1,4 +1,5 @@
 use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
 use web_sys::CanvasRenderingContext2d;
 extern crate console_error_panic_hook;
 
@@ -11,9 +12,9 @@ const MAX_LIGHT: usize = 67;
 const MIN_TRANSPARENCY: usize = 10;
 const MAX_TRANSPARENCY: usize = 60;
 const SATURATION: usize = 100;
-const START_ANGLE: usize = 240;
-const END_ANGLE: usize = 300;
-const MAX_SPEED: usize = 20;
+const START_ANGLE: f64 = 4.18; // 240 degrees
+const END_ANGLE: f64 = 5.24; // 300 degrees
+const MAX_SPEED: usize = 3;
 
 // A macro to provide `println!(..)`-style syntax for `console.log` logging.
 macro_rules! log {
@@ -28,6 +29,7 @@ pub fn init_panic_hook() {
 }
 
 #[wasm_bindgen]
+#[derive(Clone, Debug)]
 pub struct Universe {
     context: CanvasRenderingContext2d,
     width: usize,
@@ -37,15 +39,32 @@ pub struct Universe {
 }
 
 #[wasm_bindgen]
+#[allow(clippy::new_without_default)]
 impl Universe {
-    pub fn new(context: CanvasRenderingContext2d) -> Self {
+    #[wasm_bindgen]
+    pub fn new() -> Self {
         init_panic_hook();
         let (width, height) = get_window_size();
         log!("Window Size: {}x{}", width, height);
         let num_bits = (width as f32 * height as f32 / DENSITY.pow(2) as f32).floor() as usize;
         log!("Number of Bits: {}", num_bits);
-        let bits = (0..num_bits).map(|_| Bit::new(&width, &height)).collect();
+        let bits = (0..num_bits).map(|_| Bit::new(width, height)).collect();
         log!("Bits Created");
+
+        let document = web_sys::window().unwrap().document().unwrap();
+        let canvas = document.get_element_by_id("bg-canvas").unwrap();
+        let canvas: web_sys::HtmlCanvasElement = canvas
+            .dyn_into::<web_sys::HtmlCanvasElement>()
+            .map_err(|_| ())
+            .unwrap();
+
+        let context = canvas
+            .get_context("2d")
+            .unwrap()
+            .unwrap()
+            .dyn_into::<web_sys::CanvasRenderingContext2d>()
+            .unwrap();
+
         Self {
             context,
             width,
@@ -67,7 +86,7 @@ impl Universe {
 
     fn generate_bits(&mut self) {
         self.bits = (0..self.num_bits)
-            .map(|_| Bit::new(&self.width, &self.height))
+            .map(|_| Bit::new(self.width, self.height))
             .collect();
     }
 
@@ -80,9 +99,9 @@ impl Universe {
 
     fn draw(&mut self) {
         self.reset_canvas();
-        // for bit in &self.bits {
-        //     bit.draw(&self.context);
-        // }
+        for bit in &self.bits {
+            bit.draw(&mut self.context);
+        }
     }
 
     pub fn reset_canvas(&mut self) {
@@ -94,40 +113,44 @@ impl Universe {
         }
         self.context.begin_path();
         let fill_style = self.context.fill_style().as_string().unwrap();
-        log!("{}", fill_style);
-        self.context.set_fill_style(&"rgb(0,0,0)".into());
         self.context
-            .fill_rect(0.0, 0.0, width as f64, height as f64);
-        self.context
-            .clear_rect(0.0, 0.0, self.width as f64, self.height as f64);
-        self.context.stroke();
+            .clear_rect(0.0, 0.0, width as f64, height as f64);
+        //self.context.set_fill_style(&"rgb(0,0,0)".into());
+        //self.context.fill_rect(0.0, 0.0, width as f64, height as f64);
+        self.context.close_path();
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Bit {
-    pub x: isize,
-    pub y: isize,
+    pub x: f64,
+    pub y: f64,
     pub size: usize,
     pub hue: usize,
     pub saturation: usize,
     pub lightness: usize,
     pub transparency: usize,
-    pub speed: usize,
+    pub speed: f64,
     pub angle: f32,
 }
 
 impl Bit {
-    pub fn new(width: &usize, height: &usize) -> Bit {
-        let x = random_range(0, *width) as isize;
-        let y = random_range(0, *height) as isize;
-        let size = random_range(1, random_range(1, MAX_SIZE));
+    pub fn new(width: usize, height: usize) -> Bit {
+        //log!("{:?}x{:?}", width, height);
+        let x = random_range_f64(0.0, width as f64);
+        let y = random_range_f64(0.0, height as f64);
+        //log!("New Bit: {}x{}", x, y);
+        let max_size = random_range(1, MAX_SIZE);
+        let size = random_range(1, max_size);
+        //log!("h: {}, {}", HUE_START, HUE_END);
         let hue = random_range(HUE_START, HUE_END);
         let lightness = random_range(MIN_LIGHT, MAX_LIGHT);
         let saturation = SATURATION;
         let transparency = random_range(MIN_TRANSPARENCY, MAX_TRANSPARENCY);
-        let angle = random_range(START_ANGLE, END_ANGLE) as f32;
-        let speed = (random_range(1, MAX_SPEED) as f32 * 0.025) as usize;
+        let angle = random_range_f64(START_ANGLE, END_ANGLE) as f32;
+        let speed = random_range_f64(1.0, MAX_SPEED as f64) * 0.25;
+        //log!("h: {}, {}", HUE_START, HUE_END);
+        //let speed = 1.1;
         Bit {
             x,
             y,
@@ -142,30 +165,33 @@ impl Bit {
     }
 
     pub fn tick(&mut self, width: &usize, height: &usize) {
-        self.x += (self.speed as f32 * self.angle.cos()) as isize; // not sure if this is expecting radians or degrees
-        self.y += (self.speed as f32 * self.angle.sin()) as isize;
-        if self.x < 0 {
-            self.x = *width as isize;
-        } else if self.x > *width as isize {
-            self.x = 0;
+        //log!("{:?}", self.angle);
+        self.x += (self.speed as f32 * self.angle.cos()) as f64; // not sure if this is expecting radians or degrees
+        self.y += (self.speed as f32 * self.angle.sin()) as f64;
+        if self.x < 0.0 {
+            self.x = *width as f64;
+        } else if self.x > *width as f64 {
+            self.x = 0.0;
         }
-        if self.y < 0 {
-            self.y = *height as isize;
-        } else if self.y > *height as isize {
-            self.y = 0;
+        if self.y < 0.0 {
+            self.y = *height as f64;
+        } else if self.y > *height as f64 {
+            self.y = 0.0;
         }
     }
 
-    pub fn draw(&self, ctx: &CanvasRenderingContext2d) {
-        log!("Drawing Bit");
-        ctx.set_fill_style(
-            &format!(
-                "hsla({}, {}%, {}%, {})",
-                self.hue, self.saturation, self.lightness, self.transparency
-            )
-            .into(),
-        );
+    pub fn draw(&self, ctx: &mut CanvasRenderingContext2d) {
+        //log!("Drawing Bit");
+        // let color = format!(
+        //     "hsl({}, {}%, {}%)",
+        //     self.hue, self.saturation, self.lightness
+        // );
+        // log!("{:?}", ctx);
+        // //ctx.set_fill_style(&color.into());
         ctx.begin_path();
+        //ctx.set_fill_style(&"rgb(0,255,0)".into());
+        // //ctx.set_stroke_style(&color.into());
+
         ctx.arc(
             self.x as f64,
             self.y as f64,
@@ -174,7 +200,8 @@ impl Bit {
             2.0 * std::f64::consts::PI,
         )
         .unwrap();
-        ctx.fill();
+
+        ctx.stroke();
     }
 }
 
@@ -202,5 +229,19 @@ pub fn get_window_size() -> (usize, usize) {
 }
 
 pub fn random_range(min: usize, max: usize) -> usize {
-    js_sys::Math::random() as usize * (max - min) + min
+    let rand = js_sys::Math::random();
+    let range = max - min;
+    let rand_range = (rand * range as f64) as usize;
+    rand_range + min
+}
+
+pub fn random_range_f64(min: f64, max: f64) -> f64 {
+    let rand = js_sys::Math::random();
+    let range = max - min;
+    let rand_range = rand * range;
+    let result = rand_range + min;
+    // if result < 0.01 {
+    //     log!("0.0");
+    // }
+    result
 }
