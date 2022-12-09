@@ -6,7 +6,7 @@ extern crate console_error_panic_hook;
 const DENSITY: usize = 100; // lower = more dense
 const HUE_START: usize = 120;
 const HUE_END: usize = 230;
-const MAX_SIZE: usize = 3;
+const MAX_SIZE: usize = 2;
 const MIN_LIGHT: usize = 33;
 const MAX_LIGHT: usize = 67;
 const MIN_TRANSPARENCY: usize = 10;
@@ -14,7 +14,7 @@ const MAX_TRANSPARENCY: usize = 60;
 const SATURATION: usize = 100;
 const START_ANGLE: f64 = 4.18; // 240 degrees
 const END_ANGLE: f64 = 5.24; // 300 degrees
-const MAX_SPEED: usize = 3;
+const MAX_SPEED: usize = 2;
 
 // A macro to provide `println!(..)`-style syntax for `console.log` logging.
 macro_rules! log {
@@ -45,11 +45,8 @@ impl Universe {
     pub fn new() -> Self {
         init_panic_hook();
         let (width, height) = get_window_size();
-        log!("Window Size: {}x{}", width, height);
         let num_bits = (width as f32 * height as f32 / DENSITY.pow(2) as f32).floor() as usize;
-        log!("Number of Bits: {}", num_bits);
         let bits = (0..num_bits).map(|_| Bit::new(width, height)).collect();
-        log!("Bits Created");
 
         let document = web_sys::window().unwrap().document().unwrap();
         let canvas = document.get_element_by_id("bg-canvas").unwrap();
@@ -79,11 +76,6 @@ impl Universe {
             (self.width as f32 * self.height as f32 / DENSITY.pow(2) as f32).floor() as usize;
     }
 
-    fn set_size(&mut self) {
-        (self.width, self.height) = get_window_size();
-        self.set_num_bits();
-    }
-
     fn generate_bits(&mut self) {
         self.bits = (0..self.num_bits)
             .map(|_| Bit::new(self.width, self.height))
@@ -110,13 +102,12 @@ impl Universe {
             self.width = width;
             self.height = height;
             self.set_num_bits();
+            self.generate_bits();
         }
         self.context.begin_path();
-        let fill_style = self.context.fill_style().as_string().unwrap();
+        self.context.set_fill_style(&"rgb(0,0,0)".into());
         self.context
-            .clear_rect(0.0, 0.0, width as f64, height as f64);
-        //self.context.set_fill_style(&"rgb(0,0,0)".into());
-        //self.context.fill_rect(0.0, 0.0, width as f64, height as f64);
+            .fill_rect(0.0, 0.0, width as f64, height as f64);
         self.context.close_path();
     }
 }
@@ -126,12 +117,17 @@ pub struct Bit {
     pub x: f64,
     pub y: f64,
     pub size: usize,
+    pub hsla: HSLA,
+    pub speed: f64,
+    pub angle: f32,
+}
+
+#[derive(Clone, Debug)]
+pub struct HSLA {
     pub hue: usize,
     pub saturation: usize,
     pub lightness: usize,
     pub transparency: usize,
-    pub speed: f64,
-    pub angle: f32,
 }
 
 impl Bit {
@@ -147,18 +143,19 @@ impl Bit {
         let lightness = random_range(MIN_LIGHT, MAX_LIGHT);
         let saturation = SATURATION;
         let transparency = random_range(MIN_TRANSPARENCY, MAX_TRANSPARENCY);
-        let angle = random_range_f64(START_ANGLE, END_ANGLE) as f32;
-        let speed = random_range_f64(1.0, MAX_SPEED as f64) * 0.25;
-        //log!("h: {}, {}", HUE_START, HUE_END);
-        //let speed = 1.1;
-        Bit {
-            x,
-            y,
-            size,
+        let hsla = HSLA {
             hue,
             saturation,
             lightness,
             transparency,
+        };
+        let angle = random_range_f64(START_ANGLE, END_ANGLE) as f32;
+        let speed = random_range_f64(1.0, MAX_SPEED as f64) * 0.125;
+        Bit {
+            x,
+            y,
+            size,
+            hsla,
             speed,
             angle,
         }
@@ -181,16 +178,16 @@ impl Bit {
     }
 
     pub fn draw(&self, ctx: &mut CanvasRenderingContext2d) {
-        //log!("Drawing Bit");
-        // let color = format!(
-        //     "hsl({}, {}%, {}%)",
-        //     self.hue, self.saturation, self.lightness
-        // );
-        // log!("{:?}", ctx);
-        // //ctx.set_fill_style(&color.into());
+        let color = format!(
+            "hsla({}, {}%, {}%, {})",
+            self.hsla.hue,
+            self.hsla.saturation,
+            self.hsla.lightness,
+            self.hsla.transparency as f64 * 0.01
+        );
         ctx.begin_path();
-        //ctx.set_fill_style(&"rgb(0,255,0)".into());
-        // //ctx.set_stroke_style(&color.into());
+        ctx.set_fill_style(&color.clone().into());
+        ctx.set_stroke_style(&color.into());
 
         ctx.arc(
             self.x as f64,
@@ -239,9 +236,5 @@ pub fn random_range_f64(min: f64, max: f64) -> f64 {
     let rand = js_sys::Math::random();
     let range = max - min;
     let rand_range = rand * range;
-    let result = rand_range + min;
-    // if result < 0.01 {
-    //     log!("0.0");
-    // }
-    result
+    rand_range + min
 }
