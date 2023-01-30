@@ -6,7 +6,7 @@ const WasmPackPlugin = require("@wasm-tool/wasm-pack-plugin");
 module.exports = {
     entry: './bootstrap.js',
     output: {
-        path: path.resolve(__dirname, 'pkg'),
+        path: path.resolve(__dirname, 'docs'),
         filename: 'bundle.js',
     },
     plugins: [
@@ -14,7 +14,11 @@ module.exports = {
             template: 'index.html'
         }),
         new WasmPackPlugin({
-            crateDirectory: path.resolve(__dirname, ".")
+            crateDirectory: path.resolve(__dirname, "."),
+            outDir: path.resolve(__dirname, "docs"),
+            release: true,
+            target: "web",
+            args: "--no-typescript",
         })
     ],
     mode: 'development',
