@@ -18,7 +18,6 @@ module.exports = {
             outDir: path.resolve(__dirname, "docs"),
             release: true,
             target: "web",
-            args: "--no-typescript",
         })
     ],
     mode: 'development',
