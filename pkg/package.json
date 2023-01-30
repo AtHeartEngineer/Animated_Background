@@ -1,0 +1,22 @@
+{
+  "name": "animated-background",
+  "collaborators": [
+    "AtHeartEngineer"
+  ],
+  "description": "A simple animated background for your website",
+  "version": "0.1.0",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AtHeartEngineer/animated_background"
+  },
+  "files": [
+    "index_bg.wasm",
+    "index.js",
+    "index_bg.js",
+    "index.d.ts"
+  ],
+  "module": "index.js",
+  "types": "index.d.ts",
+  "sideEffects": false
+}
