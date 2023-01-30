@@ -131,12 +131,13 @@ impl Bit {
         let x = random_range_f64(0.0, width as f64);
         let y = random_range_f64(0.0, height as f64);
         //log!("New Bit: {}x{}", x, y);
-        let max_size = random_range(1, MAX_SIZE);
-        let size = random_range(1, max_size);
+        //let max_size = random_range(1, MAX_SIZE);
+        //let size = random_range(1, max_size);
         //log!("h: {}, {}", HUE_START, HUE_END);
         // let hue = random_rgb();
         // let lightness = random_range(MIN_LIGHT, MAX_LIGHT);
         // let saturation = SATURATION;
+        let size = 1;
         let (hue, saturation, lightness) = random_color();
         let transparency = random_range(MIN_TRANSPARENCY, MAX_TRANSPARENCY);
         let hsla = HSLA {
