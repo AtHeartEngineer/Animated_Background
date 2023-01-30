@@ -4,14 +4,9 @@ use web_sys::CanvasRenderingContext2d;
 extern crate console_error_panic_hook;
 
 const DENSITY: usize = 100; // lower = more dense
-const HUE_START: usize = 120;
-const HUE_END: usize = 230;
 const MAX_SIZE: usize = 2;
-const MIN_LIGHT: usize = 33;
-const MAX_LIGHT: usize = 67;
 const MIN_TRANSPARENCY: usize = 10;
 const MAX_TRANSPARENCY: usize = 60;
-const SATURATION: usize = 100;
 const START_ANGLE: f64 = 4.18; // 240 degrees
 const END_ANGLE: f64 = 5.24; // 300 degrees
 const MAX_SPEED: usize = 2;
@@ -139,9 +134,10 @@ impl Bit {
         let max_size = random_range(1, MAX_SIZE);
         let size = random_range(1, max_size);
         //log!("h: {}, {}", HUE_START, HUE_END);
-        let hue = random_range(HUE_START, HUE_END);
-        let lightness = random_range(MIN_LIGHT, MAX_LIGHT);
-        let saturation = SATURATION;
+        // let hue = random_rgb();
+        // let lightness = random_range(MIN_LIGHT, MAX_LIGHT);
+        // let saturation = SATURATION;
+        let (hue, saturation, lightness) = random_color();
         let transparency = random_range(MIN_TRANSPARENCY, MAX_TRANSPARENCY);
         let hsla = HSLA {
             hue,
@@ -237,4 +233,29 @@ pub fn random_range_f64(min: f64, max: f64) -> f64 {
     let range = max - min;
     let rand_range = rand * range;
     rand_range + min
+}
+
+pub fn random_color() -> (usize, usize, usize) {
+    let color = random_range(0, 3);
+    match color {
+        0 => (
+            // Red
+            random_range(0, 30),   // hue
+            random_range(90, 100), // saturation
+            random_range(45, 55),  // lightness
+        ),
+        1 => (
+            // Green
+            random_range(105, 130), // hue
+            random_range(90, 100),  // saturation
+            random_range(45, 55),   // lightness
+        ),
+        2 => (
+            // Blue
+            random_range(215, 250), // hue
+            random_range(90, 100),  // saturation
+            random_range(50, 60),   // lightness
+        ),
+        _ => (90, 100, 100),
+    }
 }
