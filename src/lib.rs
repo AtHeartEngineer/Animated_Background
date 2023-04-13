@@ -5,8 +5,8 @@ extern crate console_error_panic_hook;
 
 const DENSITY: usize = 100; // lower = more dense
 const MAX_SIZE: usize = 2;
-const MIN_TRANSPARENCY: usize = 10;
-const MAX_TRANSPARENCY: usize = 60;
+const MIN_TRANSPARENCY: usize = 50;
+const MAX_TRANSPARENCY: usize = 95;
 const START_ANGLE: f64 = 4.18; // 240 degrees
 const END_ANGLE: f64 = 5.24; // 300 degrees
 const MAX_SPEED: usize = 2;

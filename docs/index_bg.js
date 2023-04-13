@@ -419,8 +419,6 @@ export function __wbg_global_ba75c50d1cf384f4() { return handleError(function ()
     return addHeapObject(ret);
 }, arguments) };
 
-export const __wbg_random_656f2ae924b2540e = typeof Math.random == 'function' ? Math.random : notDefined('Math.random');
-
 export function __wbindgen_is_undefined(arg0) {
     const ret = getObject(arg0) === undefined;
     _assertBoolean(ret);
@@ -435,6 +433,8 @@ export function __wbindgen_object_clone_ref(arg0) {
 export function __wbindgen_object_drop_ref(arg0) {
     takeObject(arg0);
 };
+
+export const __wbg_random_656f2ae924b2540e = typeof Math.random == 'function' ? Math.random : notDefined('Math.random');
 
 export function __wbg_error_f851667af71bcfc6() { return logError(function (arg0, arg1) {
     try {

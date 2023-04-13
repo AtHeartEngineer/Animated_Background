@@ -1,4 +1,4 @@
-import * as wasm from "./pkg/index_bg.wasm";
+import * as wasm from "./docs/index_bg.wasm";
 const DRAW_FPS = false;
 
 wasm.init_panic_hook();
