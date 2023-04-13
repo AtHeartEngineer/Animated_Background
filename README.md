@@ -9,8 +9,10 @@ Converting some of my [javascript code](./bg.js) that makes an animated backgrou
 `cargo install wasm-pack`
 
 ## Build
-`wasm-pack build`
+
 `npm run build`
+
+> Delete `./docs/.gitignore` before pushing
 
 ## Dev
 
